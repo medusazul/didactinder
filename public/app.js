@@ -1,6 +1,14 @@
 /**********************
  * Configuración Firebase
  **********************/
+
+import firebase from 'firebase/app';
+import 'firebase/firestore'; // Si estás usando Firestore
+import 'firebase/auth'; // Si estás usando Firebase Auth
+import { initializeApp } from 'firebase/app';
+import { getFirestore } from 'firebase/firestore';
+import { getAuth } from 'firebase/auth';
+
 const firebaseConfig = {
   apiKey: "AIzaSyBV9LFUeZ4fHKv9FWwA_kLBiPaPeCGHR-8",
   authDomain: "didactinder-d642f.firebaseapp.com",
@@ -11,11 +19,11 @@ const firebaseConfig = {
 };
 
 // Inicializa Firebase
-if (!firebase.apps.length) {
-  firebase.initializeApp(firebaseConfig);
-}
-const auth = firebase.auth();
-const db = firebase.firestore();  // Usaremos Firestore para guardar perfiles y matches
+const app = initializeApp(firebaseConfig);
+
+// Usa Firestore y Auth
+const db = getFirestore(app);
+const auth = getAuth(app);
 
 /**********************
 * Variables globales

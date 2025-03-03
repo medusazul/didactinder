@@ -10,8 +10,8 @@
   "license": "ISC",
   "description": "",
   "engines": {
-  "node": ">=16.0.0"
-},
+    "node": ">=16.0.0"
+  },
   "dependencies": {
     "@firebasegen/default-connector": "file:dataconnect-generated/js/default-connector",
     "express": "^4.21.2",
