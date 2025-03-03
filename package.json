@@ -1,0 +1,23 @@
+{
+  "name": "didactinder",
+  "version": "1.0.0",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node public/app.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "engines": {
+  "node": ">=16.0.0"
+},
+  "dependencies": {
+    "@firebasegen/default-connector": "file:dataconnect-generated/js/default-connector",
+    "express": "^4.21.2",
+    "firebase": "^10.8.0",
+    "hammerjs": "^2.0.8"
+  },
+  "type": "module"
+}
