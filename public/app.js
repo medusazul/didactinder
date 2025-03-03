@@ -12,7 +12,7 @@ const firebaseConfig = {
 
 // Inicializa Firebase
 if (!firebase.apps.length) {
-firebase.initializeApp(firebaseConfig);
+  firebase.initializeApp(firebaseConfig);
 }
 const auth = firebase.auth();
 const db = firebase.firestore();  // Usaremos Firestore para guardar perfiles y matches
