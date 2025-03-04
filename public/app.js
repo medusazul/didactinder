@@ -65,9 +65,13 @@ document.querySelectorAll('nav ul.tabs li').forEach(li => {
 /**********************
 * Autenticación con Google
 **********************/
+import { getAuth, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+
 document.getElementById('login-btn').addEventListener('click', () => {
-  const provider = new firebase.auth.GoogleAuthProvider();
-  auth.signInWithPopup(provider)
+  const auth = getAuth(); // Obtiene la instancia de autenticación
+  const provider = new GoogleAuthProvider(); // Proveedor de Google
+  
+  signInWithPopup(auth, provider)
     .then(result => {
       currentUser = result.user;
       // Oculta la sección de login y muestra la app
