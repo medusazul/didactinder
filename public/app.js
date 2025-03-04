@@ -89,6 +89,11 @@ document.getElementById('edit-profile-btn').addEventListener('click', function()
   document.getElementById('edit-profile').style.display = 'block';
   document.getElementById('profile-tab').style.display = 'none';
   document.getElementById('edit-profile-btn').style.display = 'none';
+
+  // Mostrar botones de eliminación en el formulario de edición
+  document.querySelectorAll('.delete-photo').forEach(btn => {
+    btn.classList.remove('hidden');
+  });
 });
 
 // Subir fotos con Cloudinary y actualizar la vista del perfil (pero solo actualizamos la tarjeta si ya se completó el nombre y bio)
@@ -187,7 +192,7 @@ async function cargarPerfilUsuario() {
 
         const deleteBtn = document.createElement("button");
         deleteBtn.innerHTML = "&times;";
-        deleteBtn.classList.add("delete-photo");
+        deleteBtn.classList.add("delete-photo", "hidden"); // Añadir clase hidden
         deleteBtn.addEventListener("click", async () => {
           imgContainer.remove();
           await updateDoc(doc(db, "usuarios", user.uid), {
