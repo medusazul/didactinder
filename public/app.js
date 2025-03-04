@@ -70,14 +70,20 @@ document.querySelectorAll('nav ul.tabs li').forEach(li => {
 * Autenticación con Google
 **********************/
 import { getAuth, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { getFirestore } from 'firebase/firestore';
+import { app } from './firebase-config'; // Suponiendo que has exportado la inicialización de Firebase desde otro archivo
 
+// Obtén la instancia de Firebase
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+// Maneja el evento de login con Google
 document.getElementById('login-btn').addEventListener('click', () => {
-  const auth = getAuth(); // Obtiene la instancia de autenticación
   const provider = new GoogleAuthProvider(); // Proveedor de Google
   
   signInWithPopup(auth, provider)
     .then(result => {
-      currentUser = result.user;
+      const currentUser = result.user;
       // Oculta la sección de login y muestra la app
       document.getElementById('login-section').style.display = 'none';
       document.getElementById('app-section').style.display = 'block';
@@ -87,7 +93,7 @@ document.getElementById('login-btn').addEventListener('click', () => {
         .then(doc => {
           if (doc.exists) {
             // Si el perfil existe, cargarlo
-            uploadedPhotos = doc.data().photos; // Recuperar fotos subidas
+            const uploadedPhotos = doc.data().photos; // Recuperar fotos subidas
             updateProfileView(); // Actualizar la vista del perfil
             document.getElementById('edit-profile').style.display = 'none'; // Ocultar edición
             document.getElementById('edit-profile-btn').style.display = 'block'; // Mostrar botón de editar
@@ -96,11 +102,41 @@ document.getElementById('login-btn').addEventListener('click', () => {
             document.getElementById('edit-profile').style.display = 'block';
             document.getElementById('edit-profile-btn').style.display = 'none';
           }
+        })
+        .catch(error => {
+          console.error("Error al acceder al perfil:", error);
         });
     })
     .catch(error => {
-      console.error("Error al iniciar sesión:", error);
+      console.error("Error al iniciar sesión con Google:", error);
     });
+});
+
+// Verifica si el usuario ya está logueado al cargar la página
+auth.onAuthStateChanged(user => {
+  if (user) {
+    // El usuario ya está logueado
+    const currentUser = user;
+    document.getElementById('login-section').style.display = 'none';
+    document.getElementById('app-section').style.display = 'block';
+    
+    // Verificar si tiene un perfil
+    db.collection('profiles').doc(currentUser.uid).get()
+      .then(doc => {
+        if (doc.exists) {
+          const uploadedPhotos = doc.data().photos;
+          updateProfileView(); // Actualizar la vista del perfil
+          document.getElementById('edit-profile').style.display = 'none';
+          document.getElementById('edit-profile-btn').style.display = 'block';
+        } else {
+          document.getElementById('edit-profile').style.display = 'block';
+          document.getElementById('edit-profile-btn').style.display = 'none';
+        }
+      })
+      .catch(error => {
+        console.error("Error al acceder al perfil:", error);
+      });
+  }
 });
 
 /**********************
