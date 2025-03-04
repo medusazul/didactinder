@@ -24,7 +24,7 @@ const db = getFirestore(app);
 document.getElementById("login-btn").addEventListener("click", async () => {
   const provider = new GoogleAuthProvider();
   try {
-    const result = await signInWithPopup(auth, provider);
+    await signInWithPopup(auth, provider);
     document.getElementById("login-section").style.display = "none";
     document.getElementById("app-section").style.display = "block";
   } catch (error) {
@@ -34,12 +34,18 @@ document.getElementById("login-btn").addEventListener("click", async () => {
 
 // Guardar perfil en Firestore y luego mostrar la tarjeta de perfil
 document.getElementById("save-profile").addEventListener("click", async () => {
-  const nombre = document.getElementById("nombre").value;
-  const bio = document.getElementById("bio").value;
+  const nombre = document.getElementById("nombre").value.trim();
+  const bio = document.getElementById("bio").value.trim();
   const user = auth.currentUser;
 
   if (!user) {
     alert("No estás autenticado");
+    return;
+  }
+
+  // Verificamos que se hayan ingresado nombre y bio
+  if (!nombre || !bio) {
+    alert("Por favor, completa el nombre y la biografía.");
     return;
   }
 
@@ -57,7 +63,7 @@ document.getElementById("save-profile").addEventListener("click", async () => {
   }
 });
 
-// Subir fotos con Cloudinary y actualizar la vista del perfil
+// Subir fotos con Cloudinary y actualizar la vista del perfil (pero solo actualizamos la tarjeta si ya se completó el nombre y bio)
 document.getElementById("upload-photo").addEventListener("click", () => {
   const user = auth.currentUser;
   if (!user) {
@@ -88,8 +94,12 @@ document.getElementById("upload-photo").addEventListener("click", () => {
           img.classList.add("photo-preview");
           document.getElementById("photos-preview").appendChild(img);
           
-          // Actualizar la tarjeta de perfil
-          cargarPerfilUsuario();
+          // Solo actualizamos la tarjeta si ya se completaron nombre y bio
+          const nombreVal = document.getElementById("nombre").value.trim();
+          const bioVal = document.getElementById("bio").value.trim();
+          if (nombreVal && bioVal) {
+            cargarPerfilUsuario();
+          }
         } catch (err) {
           console.error("Error guardando fotos:", err);
         }
@@ -184,6 +194,27 @@ function cargarMatches() {
   matchesContainer.innerHTML = "<li>Aquí se mostrarán tus matches</li>";
 }
 
-// Asignar listeners a las pestañas "Tus compas" y "Tus matches"
-document.querySelector("[data-tab='compas']").addEventListener("click", cargarCompas);
-document.querySelector("[data-tab='matches']").addEventListener("click", cargarMatches);
+// --- Código mínimo para el cambio de pestañas ---
+// Se asume que en tu HTML tienes las pestañas definidas con data-tab="perfil", data-tab="compas" y data-tab="matches"
+// y que el contenido de cada una está en un div con id="perfil", id="compas" e id="matches" respectivamente.
+document.querySelectorAll(".tabs li").forEach(tab => {
+  tab.addEventListener("click", () => {
+    // Ocultar todos los contenidos de las pestañas
+    document.querySelectorAll("#tabs-content .tab").forEach(content => {
+      content.style.display = "none";
+    });
+    // Quitar la clase "active" a todas las pestañas
+    document.querySelectorAll(".tabs li").forEach(t => t.classList.remove("active"));
+    // Mostrar la pestaña seleccionada y agregar clase "active"
+    const tabName = tab.getAttribute("data-tab");
+    document.getElementById(tabName).style.display = "block";
+    tab.classList.add("active");
+
+    // Cargar contenido si es necesario
+    if (tabName === "compas") {
+      cargarCompas();
+    } else if (tabName === "matches") {
+      cargarMatches();
+    }
+  });
+});
