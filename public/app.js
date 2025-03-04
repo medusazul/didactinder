@@ -216,27 +216,34 @@ async function cargarPerfilUsuario() {
 function habilitarSwipe() {
   document.querySelectorAll(".tarjeta-compa").forEach(tarjeta => {
     const mc = new Hammer(tarjeta);
-    mc.on("swipeleft", async () => {
-      tarjeta.style.transform = "translateX(-100%)";
-      setTimeout(() => tarjeta.remove(), 300);
-      console.log("Rechazado:", tarjeta.querySelector("h3").textContent);
+    
+    mc.on("swipeleft", () => {
+      tarjeta.style.transform = "translateX(-100vw)";
+      tarjeta.style.opacity = "0";
+      setTimeout(() => {
+        tarjeta.remove();
+      }, 300);
     });
-    mc.on("swiperight", async () => {
-      tarjeta.style.transform = "translateX(100%)";
-      setTimeout(() => tarjeta.remove(), 300);
-      console.log("Seleccionado:", tarjeta.querySelector("h3").textContent);
 
+    mc.on("swiperight", async () => {
+      tarjeta.style.transform = "translateX(100vw)";
+      tarjeta.style.opacity = "0";
+      
       const user = auth.currentUser;
       const compaId = tarjeta.getAttribute("data-id");
-
+      
       if (user && compaId) {
         try {
           await setDoc(doc(db, "matches", user.uid), {
             matches: arrayUnion(compaId)
           }, { merge: true });
-          console.log("Match guardado:", compaId);
+          
+          setTimeout(() => {
+            tarjeta.remove();
+            cargarMatches(); // Actualizar la lista de matches
+          }, 300);
         } catch (error) {
-          console.error("Error guardando match:", error);
+          console.error("Error al guardar match:", error);
         }
       }
     });
@@ -256,24 +263,27 @@ async function cargarCompas() {
 
   querySnapshot.forEach(docSnap => {
     const data = docSnap.data();
-    if (docSnap.id !== user.uid) { // Excluir al usuario actual
+    if (docSnap.id !== user.uid) {
       const tarjeta = document.createElement("div");
       tarjeta.classList.add("tarjeta-compa");
-      tarjeta.setAttribute("data-id", docSnap.id); // Añadir data-id
+      tarjeta.setAttribute("data-id", docSnap.id);
 
       tarjeta.innerHTML = `
-        <h3>${data.nombre}</h3>
-        <div class="photos-grid">
-          ${data.photos ? data.photos.map(url => `<img src="${url}" class="photo-preview">`).join("") : ""}
+        <div class="tarjeta-contenido">
+          <h3>${data.nombre}</h3>
+          <div class="photos-grid">
+            ${data.photos ? data.photos.map(url => `
+              <img src="${url}" alt="Foto de perfil">
+            `).join("") : ""}
+          </div>
+          <p class="bio-text">${data.bio}</p>
         </div>
-        <p>${data.bio}</p>
       `;
 
       compasContainer.appendChild(tarjeta);
     }
   });
 
-  // Habilitar swipe en las tarjetas recién creadas
   habilitarSwipe();
 }
 
@@ -284,26 +294,37 @@ async function cargarMatches() {
 
   const matchesRef = doc(db, "matches", user.uid);
   const matchesSnap = await getDoc(matchesRef);
-
   const matchesContainer = document.getElementById("matches-list");
+  
   matchesContainer.innerHTML = "";
 
-  if (matchesSnap.exists()) {
-    const matchesData = matchesSnap.data();
-    if (matchesData.matches && Array.isArray(matchesData.matches)) {
-      for (const matchId of matchesData.matches) {
-        const matchRef = doc(db, "usuarios", matchId);
-        const matchSnap = await getDoc(matchRef);
-        if (matchSnap.exists()) {
-          const matchData = matchSnap.data();
-          const li = document.createElement("li");
-          li.textContent = matchData.nombre;
-          matchesContainer.appendChild(li);
-        }
+  if (matchesSnap.exists() && matchesSnap.data().matches) {
+    const matchesData = matchesSnap.data().matches;
+    
+    for (const matchId of matchesData) {
+      const matchRef = doc(db, "usuarios", matchId);
+      const matchSnap = await getDoc(matchRef);
+      
+      if (matchSnap.exists()) {
+        const matchData = matchSnap.data();
+        const matchCard = document.createElement("div");
+        matchCard.classList.add("match-card");
+        
+        matchCard.innerHTML = `
+          <h3>${matchData.nombre}</h3>
+          <div class="match-photos">
+            ${matchData.photos ? matchData.photos.map(url => `
+              <img src="${url}" alt="Foto de match">
+            `).join("") : ""}
+          </div>
+          <p>${matchData.bio}</p>
+        `;
+        
+        matchesContainer.appendChild(matchCard);
       }
     }
   } else {
-    matchesContainer.innerHTML = "<li>No tienes matches aún</li>";
+    matchesContainer.innerHTML = "<p>Aún no tienes matches</p>";
   }
 }
 
