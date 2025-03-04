@@ -1,7 +1,7 @@
 // Importación de los módulos necesarios de Firebase
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-auth.js";
-import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js";
+import { getFirestore, doc, setDoc, getDoc, collection, getDocs, arrayUnion } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js";
 
 // Configuración de Firebase
 const firebaseConfig = {
@@ -30,7 +30,7 @@ document.getElementById("login-btn").addEventListener("click", async () => {
   }
 });
 
-// Guardar perfil en Firestore
+// Guardar perfil en Firestore y luego cargar la tarjeta de perfil
 document.getElementById("save-profile").addEventListener("click", async () => {
   const nombre = document.getElementById("nombre").value;
   const bio = document.getElementById("bio").value;
@@ -48,12 +48,14 @@ document.getElementById("save-profile").addEventListener("click", async () => {
       timestamp: new Date()
     }, { merge: true });
     alert("Perfil guardado exitosamente");
+    // Cargar la vista de perfil con la tarjeta
+    await cargarPerfilUsuario();
   } catch (error) {
     console.error("Error guardando perfil: ", error);
   }
 });
 
-// Subir fotos con Cloudinary
+// Subir fotos con Cloudinary y actualizar la vista del perfil
 document.getElementById("upload-photo").addEventListener("click", () => {
   const user = auth.currentUser;
   if (!user) {
@@ -63,27 +65,30 @@ document.getElementById("upload-photo").addEventListener("click", () => {
 
   cloudinary.openUploadWidget(
     {
-      cloudName: "dqazp3l13",
-      uploadPreset: "picsDGtinder",
+      cloudName: "dqazp3l13",           // Reemplazá con tu Cloud Name
+      uploadPreset: "picsDGtinder",      // Reemplazá con tu Upload Preset
       multiple: true,
       maxFiles: 3,
       folder: `didactinder/${user.uid}`
     },
     async (error, result) => {
       if (!error && result.event === "success") {
-        const photoURLs = result.info.secure_url;
+        const photoURL = result.info.secure_url;
         
-        // Guardar la URL en Firestore
+        // Guardar la URL en Firestore, acumulándola en un array
         try {
           await setDoc(doc(db, "usuarios", user.uid), {
-            photos: photoURLs
+            photos: arrayUnion(photoURL)
           }, { merge: true });
 
-          // Mostrar vista previa
+          // Mostrar vista previa en el formulario
           const img = document.createElement("img");
-          img.src = photoURLs;
+          img.src = photoURL;
           img.classList.add("photo-preview");
           document.getElementById("photos-preview").appendChild(img);
+
+          // Actualizar la vista del perfil del usuario
+          await cargarPerfilUsuario();
         } catch (err) {
           console.error("Error guardando fotos:", err);
         }
@@ -91,3 +96,26 @@ document.getElementById("upload-photo").addEventListener("click", () => {
     }
   );
 });
+
+// Función para cargar el perfil del usuario y mostrar la tarjeta en "Tu perfil"
+async function cargarPerfilUsuario() {
+  const user = auth.currentUser;
+  if (!user) return;
+
+  const userRef = doc(db, "usuarios", user.uid);
+  const userSnap = await getDoc(userRef);
+
+  if (userSnap.exists()) {
+    const data = userSnap.data();
+    document.getElementById("profile-name").textContent = data.nombre || "";
+    document.getElementById("profile-bio").textContent = data.bio || "";
+
+    const photosContainer = document.getElementById("profile-photos");
+    photosContainer.innerHTML = "";
+    if (data.photos && Array.isArray(data.photos)) {
+      data.photos.forEach(url => {
+        const img = document.createElement("img");
+        img.src = url;
+        img.classList.add("photo-preview");
+        photosContainer.appendChild(img);
+      })
