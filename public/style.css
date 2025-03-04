@@ -190,3 +190,26 @@ nav ul.tabs li.active {
   cursor: pointer;
   font-size: 1.5em;
 }
+
+.photo-container {
+  position: relative;
+  display: inline-block;
+}
+
+.delete-photo {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  background-color: red;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 14px;
+}

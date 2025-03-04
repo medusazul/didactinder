@@ -134,7 +134,7 @@ document.getElementById("upload-photo").addEventListener("click", async () => {
           img.classList.add("photo-preview");
 
           const deleteBtn = document.createElement("button");
-          deleteBtn.textContent = "Eliminar";
+          deleteBtn.innerHTML = "&times;";
           deleteBtn.classList.add("delete-photo");
           deleteBtn.addEventListener("click", async () => {
             imgContainer.remove();
@@ -186,7 +186,7 @@ async function cargarPerfilUsuario() {
         img.classList.add("photo-preview");
 
         const deleteBtn = document.createElement("button");
-        deleteBtn.textContent = "Eliminar";
+        deleteBtn.innerHTML = "&times;";
         deleteBtn.classList.add("delete-photo");
         deleteBtn.addEventListener("click", async () => {
           imgContainer.remove();
