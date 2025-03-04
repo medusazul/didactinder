@@ -63,8 +63,8 @@ document.getElementById("upload-photo").addEventListener("click", () => {
 
   cloudinary.openUploadWidget(
     {
-      cloudName: "tu-cloud-name", // Reemplazá con tu Cloud Name de Cloudinary
-      uploadPreset: "tu-upload-preset", // Reemplazá con tu Upload Preset
+      cloudName: "dqazp3l13",
+      uploadPreset: "picsDGtinder",
       multiple: true,
       maxFiles: 3,
       folder: `didactinder/${user.uid}`
