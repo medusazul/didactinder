@@ -2,7 +2,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-auth.js";
 import { 
-  getFirestore, doc, setDoc, getDoc, collection, getDocs, arrayUnion 
+  getFirestore, doc, setDoc, getDoc, collection, getDocs, arrayUnion, arrayRemove, updateDoc 
 } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js";
 
 // Configuración de Firebase
@@ -92,10 +92,19 @@ document.getElementById('edit-profile-btn').addEventListener('click', function()
 });
 
 // Subir fotos con Cloudinary y actualizar la vista del perfil (pero solo actualizamos la tarjeta si ya se completó el nombre y bio)
-document.getElementById("upload-photo").addEventListener("click", () => {
+document.getElementById("upload-photo").addEventListener("click", async () => {
   const user = auth.currentUser;
   if (!user) {
     alert("No estás autenticado");
+    return;
+  }
+
+  const userRef = doc(db, "usuarios", user.uid);
+  const userSnap = await getDoc(userRef);
+  const currentPhotos = userSnap.exists() && userSnap.data().photos ? userSnap.data().photos : [];
+
+  if (currentPhotos.length >= 3) {
+    alert("No puedes cargar más de tres fotos.");
     return;
   }
 
@@ -104,7 +113,7 @@ document.getElementById("upload-photo").addEventListener("click", () => {
       cloudName: "dqazp3l13",           // Reemplazá con tu Cloud Name
       uploadPreset: "picsDGtinder",      // Reemplazá con tu Upload Preset
       multiple: true,
-      maxFiles: 3,
+      maxFiles: 3 - currentPhotos.length,
       folder: `didactinder/${user.uid}`
     },
     async (error, result) => {
@@ -117,10 +126,26 @@ document.getElementById("upload-photo").addEventListener("click", () => {
           }, { merge: true });
           
           // Mostrar vista previa en el formulario
+          const imgContainer = document.createElement("div");
+          imgContainer.classList.add("photo-container");
+
           const img = document.createElement("img");
           img.src = photoURL;
           img.classList.add("photo-preview");
-          document.getElementById("photos-preview").appendChild(img);
+
+          const deleteBtn = document.createElement("button");
+          deleteBtn.textContent = "Eliminar";
+          deleteBtn.classList.add("delete-photo");
+          deleteBtn.addEventListener("click", async () => {
+            imgContainer.remove();
+            await updateDoc(doc(db, "usuarios", user.uid), {
+              photos: arrayRemove(photoURL)
+            });
+          });
+
+          imgContainer.appendChild(img);
+          imgContainer.appendChild(deleteBtn);
+          document.getElementById("photos-preview").appendChild(imgContainer);
           
           // Solo actualizamos la tarjeta si ya se completaron nombre y bio
           const nombreVal = document.getElementById("nombre").value.trim();
@@ -153,10 +178,26 @@ async function cargarPerfilUsuario() {
     photosContainer.innerHTML = "";
     if (data.photos && Array.isArray(data.photos)) {
       data.photos.forEach(url => {
+        const imgContainer = document.createElement("div");
+        imgContainer.classList.add("photo-container");
+
         const img = document.createElement("img");
         img.src = url;
         img.classList.add("photo-preview");
-        photosContainer.appendChild(img);
+
+        const deleteBtn = document.createElement("button");
+        deleteBtn.textContent = "Eliminar";
+        deleteBtn.classList.add("delete-photo");
+        deleteBtn.addEventListener("click", async () => {
+          imgContainer.remove();
+          await updateDoc(doc(db, "usuarios", user.uid), {
+            photos: arrayRemove(url)
+          });
+        });
+
+        imgContainer.appendChild(img);
+        imgContainer.appendChild(deleteBtn);
+        photosContainer.appendChild(imgContainer);
       });
     }
 
