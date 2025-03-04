@@ -63,6 +63,34 @@ document.getElementById("save-profile").addEventListener("click", async () => {
   }
 });
 
+document.getElementById('save-profile').addEventListener('click', function() {
+  const nombre = document.getElementById('nombre').value;
+  const bio = document.getElementById('bio').value;
+  const photos = document.querySelectorAll('#photos-preview img');
+
+  // Mostrar la tarjeta de perfil
+  document.getElementById('profile-name').textContent = nombre;
+  document.getElementById('profile-bio').textContent = bio;
+
+  const photosGrid = document.getElementById('profile-photos');
+  photosGrid.innerHTML = ''; // Limpiar fotos anteriores
+  photos.forEach(photo => {
+    const img = document.createElement('img');
+    img.src = photo.src;
+    photosGrid.appendChild(img);
+  });
+
+  document.getElementById('edit-profile').style.display = 'none';
+  document.getElementById('profile-tab').style.display = 'block';
+  document.getElementById('edit-profile-btn').style.display = 'block';
+});
+
+document.getElementById('edit-profile-btn').addEventListener('click', function() {
+  document.getElementById('edit-profile').style.display = 'block';
+  document.getElementById('profile-tab').style.display = 'none';
+  document.getElementById('edit-profile-btn').style.display = 'none';
+});
+
 // Subir fotos con Cloudinary y actualizar la vista del perfil (pero solo actualizamos la tarjeta si ya se completó el nombre y bio)
 document.getElementById("upload-photo").addEventListener("click", () => {
   const user = auth.currentUser;
@@ -142,15 +170,29 @@ async function cargarPerfilUsuario() {
 function habilitarSwipe() {
   document.querySelectorAll(".tarjeta-compa").forEach(tarjeta => {
     const mc = new Hammer(tarjeta);
-    mc.on("swipeleft", () => {
+    mc.on("swipeleft", async () => {
       tarjeta.style.transform = "translateX(-100%)";
       setTimeout(() => tarjeta.remove(), 300);
       console.log("Rechazado:", tarjeta.querySelector("h3").textContent);
     });
-    mc.on("swiperight", () => {
+    mc.on("swiperight", async () => {
       tarjeta.style.transform = "translateX(100%)";
       setTimeout(() => tarjeta.remove(), 300);
       console.log("Seleccionado:", tarjeta.querySelector("h3").textContent);
+
+      const user = auth.currentUser;
+      const compaId = tarjeta.getAttribute("data-id");
+
+      if (user && compaId) {
+        try {
+          await setDoc(doc(db, "matches", user.uid), {
+            matches: arrayUnion(compaId)
+          }, { merge: true });
+          console.log("Match guardado:", compaId);
+        } catch (error) {
+          console.error("Error guardando match:", error);
+        }
+      }
     });
   });
 }
@@ -171,6 +213,7 @@ async function cargarCompas() {
     if (docSnap.id !== user.uid) { // Excluir al usuario actual
       const tarjeta = document.createElement("div");
       tarjeta.classList.add("tarjeta-compa");
+      tarjeta.setAttribute("data-id", docSnap.id); // Añadir data-id
 
       tarjeta.innerHTML = `
         <h3>${data.nombre}</h3>
@@ -188,10 +231,34 @@ async function cargarCompas() {
   habilitarSwipe();
 }
 
-// Función placeholder para cargar "Tus matches"
-function cargarMatches() {
+// Función para cargar "Tus matches"
+async function cargarMatches() {
+  const user = auth.currentUser;
+  if (!user) return;
+
+  const matchesRef = doc(db, "matches", user.uid);
+  const matchesSnap = await getDoc(matchesRef);
+
   const matchesContainer = document.getElementById("matches-list");
-  matchesContainer.innerHTML = "<li>Aquí se mostrarán tus matches</li>";
+  matchesContainer.innerHTML = "";
+
+  if (matchesSnap.exists()) {
+    const matchesData = matchesSnap.data();
+    if (matchesData.matches && Array.isArray(matchesData.matches)) {
+      for (const matchId of matchesData.matches) {
+        const matchRef = doc(db, "usuarios", matchId);
+        const matchSnap = await getDoc(matchRef);
+        if (matchSnap.exists()) {
+          const matchData = matchSnap.data();
+          const li = document.createElement("li");
+          li.textContent = matchData.nombre;
+          matchesContainer.appendChild(li);
+        }
+      }
+    }
+  } else {
+    matchesContainer.innerHTML = "<li>No tienes matches aún</li>";
+  }
 }
 
 // --- Código mínimo para el cambio de pestañas ---
