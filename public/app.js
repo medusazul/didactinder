@@ -6,11 +6,6 @@ if (typeof document === "undefined") {
 /**********************
  * Configuración Firebase
  **********************/
-import { initializeApp } from 'firebase/app';
-import { getFirestore } from 'firebase/firestore';
-import { getAuth } from 'firebase/auth';
-
-// Definir la configuración de Firebase primero
 const firebaseConfig = {
   apiKey: "AIzaSyBV9LFUeZ4fHKv9FWwA_kLBiPaPeCGHR-8",
   authDomain: "didactinder-d642f.firebaseapp.com",
@@ -19,6 +14,14 @@ const firebaseConfig = {
   messagingSenderId: "851846177120",
   appId: "1:851846177120:web:0275907fd82d4e0c1b7e05"
 };
+
+// Verificar la configuración antes de inicializar Firebase
+console.log(firebaseConfig);
+
+// Ahora, importa Firebase y configura la app
+import { initializeApp } from 'firebase/app';
+import { getFirestore } from 'firebase/firestore';
+import { getAuth } from 'firebase/auth';
 
 // Inicializa Firebase
 const app = initializeApp(firebaseConfig);
