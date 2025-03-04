@@ -8,41 +8,6 @@
   <link href="https://fonts.googleapis.com/css2?family=Montserrat&display=swap" rel="stylesheet">
   <!-- Archivo de estilos -->
   <link rel="stylesheet" href="style.css">
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
-    import { getAuth, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-auth.js";
-    import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js";
-  
-    // Tu configuración de Firebase
-    const firebaseConfig = {
-      apiKey: "AIzaSyBV9LFUeZ4fHKv9FWwA_kLBiPaPeCGHR-8",
-      authDomain: "didactinder-d642f.firebaseapp.com",
-      projectId: "didactinder-d642f",
-      storageBucket: "didactinder-d642f.appspot.com",
-      messagingSenderId: "851846177120",
-      appId: "1:851846177120:web:0275907fd82d4e0c1b7e05"
-    };
-  
-    // Inicializar Firebase
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
-  
-    // Lógica para iniciar sesión con Google
-    document.getElementById("login-btn").addEventListener("click", async () => {
-      const provider = new GoogleAuthProvider();
-      try {
-        const result = await signInWithPopup(auth, provider);
-        const user = result.user;
-        console.log("Usuario logueado:", user);
-        document.getElementById("login-section").style.display = "none";
-        document.getElementById("app-section").style.display = "block";
-      } catch (error) {
-        console.error("Error de autenticación:", error);
-      }
-    });
-  </script>
-  
   <!-- Cloudinary Upload Widget -->
   <script src="https://widget.cloudinary.com/v2.0/global/all.js" type="text/javascript"></script>
   <!-- Hammer.js para swipe -->
@@ -74,7 +39,6 @@
 
     <!-- Contenido de pestañas -->
     <div id="tabs-content">
-
       <!-- Pestaña Perfil -->
       <div id="perfil" class="tab">
         <div id="edit-profile">
@@ -96,7 +60,6 @@
           </div>
           <button id="edit-profile-btn" style="display:none;">Editar Perfil</button>
         </div>
-        
       </div>
 
       <!-- Pestaña Tus matches -->

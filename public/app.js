@@ -1,113 +1,93 @@
-<script type="module">
-  // Importación de los módulos necesarios de Firebase
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
-  import { getAuth, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-auth.js";
-  import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js";
-  import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-storage.js";
+// Importación de los módulos necesarios de Firebase
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-auth.js";
+import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js";
 
-  // Tu configuración de Firebase
-  const firebaseConfig = {
-    apiKey: "AIzaSyBV9LFUeZ4fHKv9FWwA_kLBiPaPeCGHR-8",
-    authDomain: "didactinder-d642f.firebaseapp.com",
-    projectId: "didactinder-d642f",
-    storageBucket: "didactinder-d642f.appspot.com",
-    messagingSenderId: "851846177120",
-    appId: "1:851846177120:web:0275907fd82d4e0c1b7e05"
-  };
+// Configuración de Firebase
+const firebaseConfig = {
+  apiKey: "AIzaSyBV9LFUeZ4fHKv9FWwA_kLBiPaPeCGHR-8",
+  authDomain: "didactinder-d642f.firebaseapp.com",
+  projectId: "didactinder-d642f",
+  storageBucket: "didactinder-d642f.appspot.com",
+  messagingSenderId: "851846177120",
+  appId: "1:851846177120:web:0275907fd82d4e0c1b7e05"
+};
 
-  // Inicializar Firebase
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-  const db = getFirestore(app);
-  const storage = getStorage(app);
+// Inicializar Firebase
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
 
-  // Lógica para iniciar sesión con Google
-  document.getElementById("login-btn").addEventListener("click", async () => {
-    const provider = new GoogleAuthProvider();
-    try {
-      const result = await signInWithPopup(auth, provider);
-      const user = result.user;
-      console.log("Usuario logueado:", user);
-      document.getElementById("login-section").style.display = "none";
-      document.getElementById("app-section").style.display = "block";
-    } catch (error) {
-      console.error("Error de autenticación:", error);
-    }
-  });
+// Iniciar sesión con Google
+document.getElementById("login-btn").addEventListener("click", async () => {
+  const provider = new GoogleAuthProvider();
+  try {
+    const result = await signInWithPopup(auth, provider);
+    document.getElementById("login-section").style.display = "none";
+    document.getElementById("app-section").style.display = "block";
+  } catch (error) {
+    console.error("Error de autenticación:", error);
+  }
+});
 
-  // Lógica para guardar el perfil del usuario
-  document.getElementById('save-profile').addEventListener('click', async () => {
-    const nombre = document.getElementById('nombre').value;
-    const bio = document.getElementById('bio').value;
+// Guardar perfil en Firestore
+document.getElementById("save-profile").addEventListener("click", async () => {
+  const nombre = document.getElementById("nombre").value;
+  const bio = document.getElementById("bio").value;
+  const user = auth.currentUser;
 
-    if (nombre && bio) {
-      const user = auth.currentUser;
-      const userRef = doc(db, "usuarios", user.uid);
+  if (!user) {
+    alert("No estás autenticado");
+    return;
+  }
 
-      try {
-        await setDoc(userRef, {
-          nombre: nombre,
-          bio: bio
-        }, { merge: true });
+  try {
+    await setDoc(doc(db, "usuarios", user.uid), {
+      nombre,
+      bio,
+      timestamp: new Date()
+    }, { merge: true });
+    alert("Perfil guardado exitosamente");
+  } catch (error) {
+    console.error("Error guardando perfil: ", error);
+  }
+});
 
-        alert("Perfil guardado exitosamente");
-      } catch (error) {
-        console.error("Error guardando perfil: ", error);
-        alert("Error al guardar el perfil");
-      }
-    } else {
-      alert("Por favor complete los campos de nombre y biografía.");
-    }
-  });
+// Subir fotos con Cloudinary
+document.getElementById("upload-photo").addEventListener("click", () => {
+  const user = auth.currentUser;
+  if (!user) {
+    alert("No estás autenticado");
+    return;
+  }
 
-  // Lógica para subir fotos a Firebase Storage
-  document.getElementById('upload-photo').addEventListener('click', () => {
-    const inputFile = document.createElement('input');
-    inputFile.type = 'file';
-    inputFile.accept = 'image/*';
-    inputFile.multiple = true;
-
-    inputFile.addEventListener('change', async (event) => {
-      const files = event.target.files;
-      const photoURLs = [];
-
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i];
-        const fileRef = ref(storage, `photos/${file.name}`);
-        const uploadTask = uploadBytesResumable(fileRef, file);
-
+  cloudinary.openUploadWidget(
+    {
+      cloudName: "tu-cloud-name", // Reemplazá con tu Cloud Name de Cloudinary
+      uploadPreset: "tu-upload-preset", // Reemplazá con tu Upload Preset
+      multiple: true,
+      maxFiles: 3,
+      folder: `didactinder/${user.uid}`
+    },
+    async (error, result) => {
+      if (!error && result.event === "success") {
+        const photoURLs = result.info.secure_url;
+        
+        // Guardar la URL en Firestore
         try {
-          await uploadTask;
-          const photoURL = await getDownloadURL(fileRef);
-          photoURLs.push(photoURL);
+          await setDoc(doc(db, "usuarios", user.uid), {
+            photos: photoURLs
+          }, { merge: true });
 
-          // Mostrar una vista previa de las fotos
-          const img = document.createElement('img');
-          img.src = photoURL;
-          img.classList.add('photo-preview');
-          document.getElementById('photos-preview').appendChild(img);
-        } catch (error) {
-          console.error("Error subiendo la foto: ", error);
+          // Mostrar vista previa
+          const img = document.createElement("img");
+          img.src = photoURLs;
+          img.classList.add("photo-preview");
+          document.getElementById("photos-preview").appendChild(img);
+        } catch (err) {
+          console.error("Error guardando fotos:", err);
         }
       }
-
-      // Guardar las URLs de las fotos en Firestore
-      const user = auth.currentUser;
-      const userRef = doc(db, "usuarios", user.uid);
-
-      try {
-        await setDoc(userRef, {
-          photos: photoURLs
-        }, { merge: true });
-
-        alert("Fotos subidas exitosamente");
-      } catch (error) {
-        console.error("Error guardando fotos: ", error);
-        alert("Error al subir fotos");
-      }
-    });
-
-    inputFile.click();
-  });
-
-</script>
+    }
+  );
+});
