@@ -9,28 +9,40 @@
   <!-- Archivo de estilos -->
   <link rel="stylesheet" href="style.css">
   <script type="module">
-    // Import the functions you need from the SDKs you need
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
-    // TODO: Add SDKs for Firebase products that you want to use
-    // https://firebase.google.com/docs/web/setup#available-libraries
+    import { getAuth, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-auth.js";
+    import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js";
   
-    // Your web app's Firebase configuration
+    // Tu configuración de Firebase
     const firebaseConfig = {
       apiKey: "AIzaSyBV9LFUeZ4fHKv9FWwA_kLBiPaPeCGHR-8",
       authDomain: "didactinder-d642f.firebaseapp.com",
       projectId: "didactinder-d642f",
-      storageBucket: "didactinder-d642f.firebasestorage.app",
+      storageBucket: "didactinder-d642f.appspot.com",
       messagingSenderId: "851846177120",
       appId: "1:851846177120:web:0275907fd82d4e0c1b7e05"
     };
   
-    // Initialize Firebase
+    // Inicializar Firebase
     const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+  
+    // Lógica para iniciar sesión con Google
+    document.getElementById("login-btn").addEventListener("click", async () => {
+      const provider = new GoogleAuthProvider();
+      try {
+        const result = await signInWithPopup(auth, provider);
+        const user = result.user;
+        console.log("Usuario logueado:", user);
+        document.getElementById("login-section").style.display = "none";
+        document.getElementById("app-section").style.display = "block";
+      } catch (error) {
+        console.error("Error de autenticación:", error);
+      }
+    });
   </script>
-  <!-- Firebase App (SDK) -->
-  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+  
   <!-- Cloudinary Upload Widget -->
   <script src="https://widget.cloudinary.com/v2.0/global/all.js" type="text/javascript"></script>
   <!-- Hammer.js para swipe -->
