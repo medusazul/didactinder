@@ -1,3 +1,8 @@
+if (typeof document === "undefined") {
+  console.error("Este script debe ejecutarse en un navegador.");
+  process.exit(1); // Detiene la ejecución si se ejecuta en Node.js
+}
+
 /**********************
  * Configuración Firebase
  **********************/
