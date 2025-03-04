@@ -20,13 +20,52 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// Iniciar sesión con Google
+// Agregar este código después de la inicialización de Firebase
+auth.onAuthStateChanged(async (user) => {
+  if (user) {
+    const userDoc = await getDoc(doc(db, "usuarios", user.uid));
+    
+    document.getElementById("login-section").style.display = "none";
+    document.getElementById("app-section").style.display = "block";
+    
+    if (userDoc.exists()) {
+      document.getElementById("edit-profile").style.display = "none";
+      document.getElementById("profile-tab").style.display = "block";
+      cargarPerfilUsuario();
+    } else {
+      document.getElementById("edit-profile").style.display = "block";
+      document.getElementById("profile-tab").style.display = "none";
+    }
+  } else {
+    document.getElementById("login-section").style.display = "block";
+    document.getElementById("app-section").style.display = "none";
+  }
+});
+
+// Iniciar sesión con Google y verificar si el usuario ya existe
 document.getElementById("login-btn").addEventListener("click", async () => {
   const provider = new GoogleAuthProvider();
   try {
-    await signInWithPopup(auth, provider);
+    const result = await signInWithPopup(auth, provider);
+    const user = result.user;
+    
+    // Verificar si el usuario ya tiene perfil
+    const userDoc = await getDoc(doc(db, "usuarios", user.uid));
+    
     document.getElementById("login-section").style.display = "none";
     document.getElementById("app-section").style.display = "block";
+    
+    if (userDoc.exists()) {
+      // Si el usuario ya existe, mostrar directamente su perfil
+      document.getElementById("edit-profile").style.display = "none";
+      document.getElementById("profile-tab").style.display = "block";
+      cargarPerfilUsuario();
+    } else {
+      // Si es un usuario nuevo, mostrar el formulario de creación de perfil
+      document.getElementById("edit-profile").style.display = "block";
+      document.getElementById("profile-tab").style.display = "none";
+    }
+    
   } catch (error) {
     console.error("Error de autenticación:", error);
   }
