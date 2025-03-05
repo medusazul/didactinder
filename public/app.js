@@ -155,7 +155,7 @@ document.getElementById("upload-photo").addEventListener("click", async () => {
   const currentPhotos = userSnap.exists() && userSnap.data().photos ? userSnap.data().photos : [];
 
   if (currentPhotos.length >= 3) {
-    alert("No puedes cargar más de tres fotos.");
+    alert("No podés cargar más de tres fotos.");
     return;
   }
 
@@ -255,6 +255,7 @@ async function cargarPerfilUsuario() {
     // Ocultar el formulario de edición y mostrar la tarjeta de perfil
     document.getElementById("edit-profile").style.display = "none";
     document.getElementById("profile-tab").style.display = "block";
+    document.getElementById("edit-profile-btn").style.display = "block";
   }
 }
 
@@ -397,7 +398,7 @@ async function cargarMatches() {
       }
     }
   } else {
-    matchesContainer.innerHTML = "<p>Aún no tienes matches</p>";
+    matchesContainer.innerHTML = "<p>Aún no tenés matches</p>";
   }
 }
 
