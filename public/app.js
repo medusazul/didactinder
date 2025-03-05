@@ -20,7 +20,14 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// Agregar este código después de la inicialización de Firebase
+// Función para verificar si el perfil está completo
+function isProfileComplete(userData) {
+  return userData.nombre && 
+         userData.bio && 
+         userData.photos && 
+         userData.photos.length > 0;
+}
+
 auth.onAuthStateChanged(async (user) => {
   if (user) {
     const userDoc = await getDoc(doc(db, "usuarios", user.uid));
@@ -154,8 +161,8 @@ document.getElementById("upload-photo").addEventListener("click", async () => {
 
   cloudinary.openUploadWidget(
     {
-      cloudName: "dqazp3l13",           // Reemplazá con tu Cloud Name
-      uploadPreset: "picsDGtinder",      // Reemplazá con tu Upload Preset
+      cloudName: "dqazp3l13",
+      uploadPreset: "picsDGtinder",
       multiple: true,
       maxFiles: 3 - currentPhotos.length,
       folder: `didactinder/${user.uid}`
@@ -256,34 +263,45 @@ function habilitarSwipe() {
   document.querySelectorAll(".tarjeta-compa").forEach(tarjeta => {
     const mc = new Hammer(tarjeta);
     
-    mc.on("swipeleft", () => {
-      tarjeta.style.transform = "translateX(-100vw)";
-      tarjeta.style.opacity = "0";
-      setTimeout(() => {
-        tarjeta.remove();
-      }, 300);
-    });
-
-    mc.on("swiperight", async () => {
-      tarjeta.style.transform = "translateX(100vw)";
-      tarjeta.style.opacity = "0";
-      
+    mc.on("swipeleft", async () => {
       const user = auth.currentUser;
       const compaId = tarjeta.getAttribute("data-id");
       
-      if (user && compaId) {
-        try {
-          await setDoc(doc(db, "matches", user.uid), {
-            matches: arrayUnion(compaId)
-          }, { merge: true });
-          
-          setTimeout(() => {
-            tarjeta.remove();
-            cargarMatches(); // Actualizar la lista de matches
-          }, 300);
-        } catch (error) {
-          console.error("Error al guardar match:", error);
-        }
+      tarjeta.style.transform = "translateX(-100vw)";
+      tarjeta.style.opacity = "0";
+      
+      // Registrar rechazo
+      await setDoc(doc(db, "interacciones", user.uid), {
+        rechazos: arrayUnion(compaId)
+      }, { merge: true });
+      
+      setTimeout(() => tarjeta.remove(), 300);
+    });
+
+    mc.on("swiperight", async () => {
+      const user = auth.currentUser;
+      const compaId = tarjeta.getAttribute("data-id");
+      
+      tarjeta.style.transform = "translateX(100vw)";
+      tarjeta.style.opacity = "0";
+      
+      try {
+        // Registrar match potencial
+        await setDoc(doc(db, "matches", user.uid), {
+          matches: arrayUnion(compaId)
+        }, { merge: true });
+        
+        // Registrar interacción
+        await setDoc(doc(db, "interacciones", user.uid), {
+          matches: arrayUnion(compaId)
+        }, { merge: true });
+        
+        setTimeout(() => {
+          tarjeta.remove();
+          cargarMatches();
+        }, 300);
+      } catch (error) {
+        console.error("Error al registrar match:", error);
       }
     });
   });
@@ -294,15 +312,27 @@ async function cargarCompas() {
   const user = auth.currentUser;
   if (!user) return;
 
+  // Obtener perfiles ya vistos (tanto matches como rechazos)
+  const interaccionesRef = doc(db, "interacciones", user.uid);
+  const interaccionesSnap = await getDoc(interaccionesRef);
+  const perfilesVistos = interaccionesSnap.exists() ? 
+    [...(interaccionesSnap.data().matches || []), ...(interaccionesSnap.data().rechazos || [])] : 
+    [];
+
   const usuariosRef = collection(db, "usuarios");
   const querySnapshot = await getDocs(usuariosRef);
   const compasContainer = document.getElementById("compas-container");
 
   compasContainer.innerHTML = "";
+  let perfilesDisponibles = false;
 
   querySnapshot.forEach(docSnap => {
     const data = docSnap.data();
-    if (docSnap.id !== user.uid) {
+    // Mostrar solo perfiles completos que no sean el usuario actual y no hayan sido vistos
+    if (docSnap.id !== user.uid && 
+        !perfilesVistos.includes(docSnap.id) && 
+        isProfileComplete(data)) {
+      perfilesDisponibles = true;
       const tarjeta = document.createElement("div");
       tarjeta.classList.add("tarjeta-compa");
       tarjeta.setAttribute("data-id", docSnap.id);
@@ -323,7 +353,11 @@ async function cargarCompas() {
     }
   });
 
-  habilitarSwipe();
+  if (!perfilesDisponibles) {
+    compasContainer.innerHTML = "<p>No hay más perfiles disponibles por el momento.</p>";
+  } else {
+    habilitarSwipe();
+  }
 }
 
 // Función para cargar "Tus matches"
