@@ -45,10 +45,11 @@ header .logo {
 
 /* Menú de pestañas */
 nav {
-  width: 100%; /* Hace que el menú ocupe todo el ancho de la pantalla */
+  width: 100%;
   background-color: #ef4a75;
   color: #ffffff;
-  box-sizing: border-box; /* Asegura que el padding se incluya dentro del ancho */
+  box-sizing: border-box;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
 /* Estilos para los elementos dentro del menú */
@@ -57,18 +58,36 @@ nav ul.tabs {
   display: flex;
   margin: 0;
   padding: 0;
+  justify-content: space-around;
 }
 
 nav ul.tabs li {
   flex: 1;
   text-align: center;
-  padding: 10px;
+  padding: 15px;
   cursor: pointer;
-  border-bottom: 2px solid transparent;
+  transition: all 0.3s ease;
+  position: relative;
+  font-weight: 500;
+}
+
+nav ul.tabs li:hover {
+  background-color: rgba(255, 145, 77, 0.3); /* Naranja con transparencia */
 }
 
 nav ul.tabs li.active {
-  border-bottom: 2px solid #fe3c72;
+  background-color: #ff914d; /* Naranja del header */
+  position: relative;
+}
+
+nav ul.tabs li.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background-color: #ffffff;
 }
 
 /* Contenido de las pestañas */
