@@ -403,8 +403,6 @@ async function cargarMatches() {
 }
 
 // --- Código mínimo para el cambio de pestañas ---
-// Se asume que en tu HTML tienes las pestañas definidas con data-tab="perfil", data-tab="compas" y data-tab="matches"
-// y que el contenido de cada una está en un div con id="perfil", id="compas" e id="matches" respectivamente.
 document.querySelectorAll(".tabs li").forEach(tab => {
   tab.addEventListener("click", () => {
     // Ocultar todos los contenidos de las pestañas
