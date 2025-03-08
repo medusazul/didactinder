@@ -264,34 +264,13 @@ function habilitarSwipe() {
   document.querySelectorAll(".tarjeta-compa").forEach(tarjeta => {
     const mc = new Hammer(tarjeta);
 
-    // Crear elementos para la cruz roja y la tilde verde
-    const cross = document.createElement("div");
-    cross.classList.add("swipe-cross");
-    cross.innerHTML = "&#10060;"; // Cruz roja
-    tarjeta.appendChild(cross);
-
-    const check = document.createElement("div");
-    check.classList.add("swipe-check");
-    check.innerHTML = "&#10004;"; // Tilde verde
-    tarjeta.appendChild(check);
-
     mc.on("pan", (event) => {
       tarjeta.style.transform = `translate(${event.deltaX}px, ${event.deltaY}px)`;
       tarjeta.style.transition = "none";
-
-      if (event.deltaX < 0) {
-        cross.style.opacity = Math.min(Math.abs(event.deltaX) / 100, 1);
-        check.style.opacity = 0;
-      } else {
-        check.style.opacity = Math.min(event.deltaX / 100, 1);
-        cross.style.opacity = 0;
-      }
     });
 
     mc.on("panend", async (event) => {
       tarjeta.style.transition = "transform 0.3s ease";
-      cross.style.opacity = 0;
-      check.style.opacity = 0;
 
       if (event.deltaX < -100) {
         tarjeta.style.transform = "translateX(-100vw)";

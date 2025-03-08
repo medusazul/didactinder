@@ -313,23 +313,3 @@ nav ul.tabs li.active {
   object-fit: cover;
   border-radius: 5px;
 }
-
-/*animaciones*/
-.swipe-cross, .swipe-check {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 3rem;
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
-.swipe-cross {
-  left: 10px;
-  color: red;
-}
-
-.swipe-check {
-  right: 10px;
-  color: green;
-}
