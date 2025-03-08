@@ -263,46 +263,76 @@ async function cargarPerfilUsuario() {
 function habilitarSwipe() {
   document.querySelectorAll(".tarjeta-compa").forEach(tarjeta => {
     const mc = new Hammer(tarjeta);
-    
-    mc.on("swipeleft", async () => {
-      const user = auth.currentUser;
-      const compaId = tarjeta.getAttribute("data-id");
-      
-      tarjeta.style.transform = "translateX(-100vw)";
-      tarjeta.style.opacity = "0";
-      
-      // Registrar rechazo
-      await setDoc(doc(db, "interacciones", user.uid), {
-        rechazos: arrayUnion(compaId)
-      }, { merge: true });
-      
-      setTimeout(() => tarjeta.remove(), 300);
+
+    // Crear elementos para la cruz roja y la tilde verde
+    const cross = document.createElement("div");
+    cross.classList.add("swipe-cross");
+    cross.innerHTML = "&#10060;"; // Cruz roja
+    tarjeta.appendChild(cross);
+
+    const check = document.createElement("div");
+    check.classList.add("swipe-check");
+    check.innerHTML = "&#10004;"; // Tilde verde
+    tarjeta.appendChild(check);
+
+    mc.on("pan", (event) => {
+      tarjeta.style.transform = `translate(${event.deltaX}px, ${event.deltaY}px)`;
+      tarjeta.style.transition = "none";
+
+      if (event.deltaX < 0) {
+        cross.style.opacity = Math.min(Math.abs(event.deltaX) / 100, 1);
+        check.style.opacity = 0;
+      } else {
+        check.style.opacity = Math.min(event.deltaX / 100, 1);
+        cross.style.opacity = 0;
+      }
     });
 
-    mc.on("swiperight", async () => {
-      const user = auth.currentUser;
-      const compaId = tarjeta.getAttribute("data-id");
-      
-      tarjeta.style.transform = "translateX(100vw)";
-      tarjeta.style.opacity = "0";
-      
-      try {
-        // Registrar match potencial
-        await setDoc(doc(db, "matches", user.uid), {
-          matches: arrayUnion(compaId)
-        }, { merge: true });
-        
-        // Registrar interacción
+    mc.on("panend", async (event) => {
+      tarjeta.style.transition = "transform 0.3s ease";
+      cross.style.opacity = 0;
+      check.style.opacity = 0;
+
+      if (event.deltaX < -100) {
+        tarjeta.style.transform = "translateX(-100vw)";
+        tarjeta.style.opacity = "0";
+
+        const user = auth.currentUser;
+        const compaId = tarjeta.getAttribute("data-id");
+
+        // Registrar rechazo
         await setDoc(doc(db, "interacciones", user.uid), {
-          matches: arrayUnion(compaId)
+          rechazos: arrayUnion(compaId)
         }, { merge: true });
-        
-        setTimeout(() => {
-          tarjeta.remove();
-          cargarMatches();
-        }, 300);
-      } catch (error) {
-        console.error("Error al registrar match:", error);
+
+        setTimeout(() => tarjeta.remove(), 300);
+      } else if (event.deltaX > 100) {
+        tarjeta.style.transform = "translateX(100vw)";
+        tarjeta.style.opacity = "0";
+
+        const user = auth.currentUser;
+        const compaId = tarjeta.getAttribute("data-id");
+
+        try {
+          // Registrar match potencial
+          await setDoc(doc(db, "matches", user.uid), {
+            matches: arrayUnion(compaId)
+          }, { merge: true });
+
+          // Registrar interacción
+          await setDoc(doc(db, "interacciones", user.uid), {
+            matches: arrayUnion(compaId)
+          }, { merge: true });
+
+          setTimeout(() => {
+            tarjeta.remove();
+            cargarMatches();
+          }, 300);
+        } catch (error) {
+          console.error("Error al registrar match:", error);
+        }
+      } else {
+        tarjeta.style.transform = "translate(0, 0)";
       }
     });
   });
@@ -421,6 +451,8 @@ document.querySelectorAll(".tabs li").forEach(tab => {
       cargarCompas();
     } else if (tabName === "matches") {
       cargarMatches();
+    }else if (tabName === "profile") {
+      cargarPerfilUsuario();
     }
   });
 });
