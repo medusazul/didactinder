@@ -222,40 +222,53 @@ async function cargarPerfilUsuario() {
 
   if (userSnap.exists()) {
     const data = userSnap.data();
-    document.getElementById("profile-name").textContent = data.nombre || "";
-    document.getElementById("profile-bio").textContent = data.bio || "";
-
+    
+    // Asegurarnos de que los elementos existen antes de modificarlos
+    const profileName = document.getElementById("profile-name");
+    const profileBio = document.getElementById("profile-bio");
     const photosContainer = document.getElementById("profile-photos");
-    photosContainer.innerHTML = "";
-    if (data.photos && Array.isArray(data.photos)) {
-      data.photos.forEach(url => {
-        const imgContainer = document.createElement("div");
-        imgContainer.classList.add("photo-container");
+    
+    if (profileName && profileBio && photosContainer) {
+      profileName.textContent = data.nombre || "";
+      profileBio.textContent = data.bio || "";
+      photosContainer.innerHTML = "";
 
-        const img = document.createElement("img");
-        img.src = url;
-        img.classList.add("photo-preview");
+      if (data.photos && Array.isArray(data.photos)) {
+        data.photos.forEach(url => {
+          const imgContainer = document.createElement("div");
+          imgContainer.classList.add("photo-container");
 
-        const deleteBtn = document.createElement("button");
-        deleteBtn.innerHTML = "&times;";
-        deleteBtn.classList.add("delete-photo", "hidden"); // Añadir clase hidden
-        deleteBtn.addEventListener("click", async () => {
-          imgContainer.remove();
-          await updateDoc(doc(db, "usuarios", user.uid), {
-            photos: arrayRemove(url)
+          const img = document.createElement("img");
+          img.src = url;
+          img.classList.add("photo-preview");
+
+          const deleteBtn = document.createElement("button");
+          deleteBtn.innerHTML = "&times;";
+          deleteBtn.classList.add("delete-photo", "hidden");
+          deleteBtn.addEventListener("click", async () => {
+            imgContainer.remove();
+            await updateDoc(doc(db, "usuarios", user.uid), {
+              photos: arrayRemove(url)
+            });
           });
+
+          imgContainer.appendChild(img);
+          imgContainer.appendChild(deleteBtn);
+          photosContainer.appendChild(imgContainer);
         });
+      }
 
-        imgContainer.appendChild(img);
-        imgContainer.appendChild(deleteBtn);
-        photosContainer.appendChild(imgContainer);
-      });
+      // Asegurarnos de que se muestren los elementos correctos
+      document.getElementById("edit-profile").style.display = "none";
+      document.getElementById("profile-tab").style.display = "block";
+      document.getElementById("edit-profile-btn").style.display = "block";
+      
+      // Forzar la visibilidad de la tarjeta de perfil
+      const profileCard = document.getElementById("profile-card");
+      if (profileCard) {
+        profileCard.style.display = "block";
+      }
     }
-
-    // Ocultar el formulario de edición y mostrar la tarjeta de perfil
-    document.getElementById("edit-profile").style.display = "none";
-    document.getElementById("profile-tab").style.display = "block";
-    document.getElementById("edit-profile-btn").style.display = "block";
   }
 }
 
@@ -338,10 +351,21 @@ async function cargarCompas() {
 
   querySnapshot.forEach(docSnap => {
     const data = docSnap.data();
-    // Mostrar solo perfiles completos que no sean el usuario actual y no hayan sido vistos
-    if (docSnap.id !== user.uid && 
-        !perfilesVistos.includes(docSnap.id) && 
-        isProfileComplete(data)) {
+    
+    // Verificación más explícita del ID del usuario actual
+    const esPerfilPropio = docSnap.id === user.uid;
+    const estaVisto = perfilesVistos.includes(docSnap.id);
+    const perfilCompleto = isProfileComplete(data);
+
+    // Console.log para debugging
+    console.log('Perfil:', {
+      id: docSnap.id,
+      esPropio: esPerfilPropio,
+      estaVisto: estaVisto,
+      completo: perfilCompleto
+    });
+
+    if (!esPerfilPropio && !estaVisto && perfilCompleto) {
       perfilesDisponibles = true;
       const tarjeta = document.createElement("div");
       tarjeta.classList.add("tarjeta-compa");
