@@ -5,7 +5,7 @@ import {
   getFirestore, doc, setDoc, getDoc, collection, getDocs, arrayUnion, arrayRemove, updateDoc 
 } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js";
 
-// Configuración de Firebase
+// Configuracións de Firebase
 const firebaseConfig = {
   apiKey: "AIzaSyBV9LFUeZ4fHKv9FWwA_kLBiPaPeCGHR-8",
   authDomain: "didactinder-d642f.firebaseapp.com",
@@ -274,6 +274,8 @@ function habilitarSwipe() {
     tarjeta.appendChild(iconReject);
 
     const mc = new Hammer(tarjeta);
+    // Configurar pan en todas direcciones
+    mc.get("pan").set({ direction: Hammer.DIRECTION_ALL });
 
     mc.on("pan", (event) => {
       tarjeta.style.transform = `translate(${event.deltaX}px, ${event.deltaY}px)`;
@@ -293,6 +295,7 @@ function habilitarSwipe() {
 
     mc.on("panend", async (event) => {
       tarjeta.style.transition = "transform 0.3s ease";
+      // Reiniciar opacidades
       iconLike.style.opacity = 0;
       iconReject.style.opacity = 0;
 
@@ -303,7 +306,6 @@ function habilitarSwipe() {
         tarjeta.style.transform = "translateX(-100vw)";
         tarjeta.style.opacity = "0";
 
-        // Registrar rechazo
         await setDoc(doc(db, "interacciones", user.uid), {
           rechazos: arrayUnion(compaId)
         }, { merge: true });
@@ -314,19 +316,16 @@ function habilitarSwipe() {
         tarjeta.style.opacity = "0";
 
         try {
-          // Registrar like en interacciones
           await setDoc(doc(db, "interacciones", user.uid), {
             likes: arrayUnion(compaId)
           }, { merge: true });
 
-          // Verificar si el otro usuario ya dio like
           const candidateInteractionsSnap = await getDoc(doc(db, "interacciones", compaId));
           if (
             candidateInteractionsSnap.exists() &&
             candidateInteractionsSnap.data().likes &&
             candidateInteractionsSnap.data().likes.includes(user.uid)
           ) {
-            // Registrar match mutuo en ambas cuentas
             await setDoc(doc(db, "matches", user.uid), {
               matches: arrayUnion(compaId)
             }, { merge: true });
