@@ -5,7 +5,7 @@ import {
   getFirestore, doc, setDoc, getDoc, collection, getDocs, arrayUnion, arrayRemove, updateDoc 
 } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js";
 
-// Configuracións de Firebase
+// Configuración de Firebase
 const firebaseConfig = {
   apiKey: "AIzaSyBV9LFUeZ4fHKv9FWwA_kLBiPaPeCGHR-8",
   authDomain: "didactinder-d642f.firebaseapp.com",
@@ -63,12 +63,10 @@ document.getElementById("login-btn").addEventListener("click", async () => {
     document.getElementById("app-section").style.display = "block";
     
     if (userDoc.exists()) {
-      // Si el usuario ya existe, mostrar directamente su perfil
       document.getElementById("edit-profile").style.display = "none";
       document.getElementById("profile-tab").style.display = "block";
       cargarPerfilUsuario();
     } else {
-      // Si es un usuario nuevo, mostrar el formulario de creación de perfil
       document.getElementById("edit-profile").style.display = "block";
       document.getElementById("profile-tab").style.display = "none";
     }
@@ -89,7 +87,6 @@ document.getElementById("save-profile").addEventListener("click", async () => {
     return;
   }
 
-  // Verificamos que se hayan ingresado nombre y bio
   if (!nombre || !bio) {
     alert("Por favor, completa el nombre y la biografía.");
     return;
@@ -102,7 +99,6 @@ document.getElementById("save-profile").addEventListener("click", async () => {
       timestamp: new Date()
     }, { merge: true });
     alert("Perfil guardado exitosamente");
-    // Cargar la vista de perfil actualizada
     cargarPerfilUsuario();
   } catch (error) {
     console.error("Error guardando perfil: ", error);
@@ -114,12 +110,11 @@ document.getElementById('save-profile').addEventListener('click', function() {
   const bio = document.getElementById('bio').value;
   const photos = document.querySelectorAll('#photos-preview img');
 
-  // Mostrar la tarjeta de perfil
   document.getElementById('profile-name').textContent = nombre;
   document.getElementById('profile-bio').textContent = bio;
 
   const photosGrid = document.getElementById('profile-photos');
-  photosGrid.innerHTML = ''; // Limpiar fotos anteriores
+  photosGrid.innerHTML = "";
   photos.forEach(photo => {
     const img = document.createElement('img');
     img.src = photo.src;
@@ -136,13 +131,12 @@ document.getElementById('edit-profile-btn').addEventListener('click', function()
   document.getElementById('profile-tab').style.display = 'none';
   document.getElementById('edit-profile-btn').style.display = 'none';
 
-  // Mostrar botones de eliminación en el formulario de edición
   document.querySelectorAll('.delete-photo').forEach(btn => {
     btn.classList.remove('hidden');
   });
 });
 
-// Subir fotos con Cloudinary y actualizar la vista del perfil (pero solo actualizamos la tarjeta si ya se completó el nombre y bio)
+// Subir fotos con Cloudinary y actualizar la vista del perfil
 document.getElementById("upload-photo").addEventListener("click", async () => {
   const user = auth.currentUser;
   if (!user) {
@@ -171,12 +165,10 @@ document.getElementById("upload-photo").addEventListener("click", async () => {
       if (!error && result.event === "success") {
         const photoURL = result.info.secure_url;
         try {
-          // Acumular la URL en un array usando arrayUnion
           await setDoc(doc(db, "usuarios", user.uid), {
             photos: arrayUnion(photoURL)
           }, { merge: true });
           
-          // Mostrar vista previa en el formulario
           const imgContainer = document.createElement("div");
           imgContainer.classList.add("photo-container");
 
@@ -198,7 +190,6 @@ document.getElementById("upload-photo").addEventListener("click", async () => {
           imgContainer.appendChild(deleteBtn);
           document.getElementById("photos-preview").appendChild(imgContainer);
           
-          // Solo actualizamos la tarjeta si ya se completaron nombre y bio
           const nombreVal = document.getElementById("nombre").value.trim();
           const bioVal = document.getElementById("bio").value.trim();
           if (nombreVal && bioVal) {
@@ -222,8 +213,6 @@ async function cargarPerfilUsuario() {
 
   if (userSnap.exists()) {
     const data = userSnap.data();
-    
-    // Obtenemos los elementos de la tarjeta
     const profileName = document.getElementById("profile-name");
     const profileBio = document.getElementById("profile-bio");
     const photosContainer = document.getElementById("profile-photos");
@@ -234,7 +223,6 @@ async function cargarPerfilUsuario() {
       profileBio.textContent = data.bio || "";
       photosContainer.innerHTML = "";
 
-      // Agregar cada foto, de la misma forma que la ven los compañeros
       if (data.photos && Array.isArray(data.photos)) {
         data.photos.forEach(url => {
           const imgContainer = document.createElement("div");
@@ -249,12 +237,9 @@ async function cargarPerfilUsuario() {
         });
       }
       
-      // Mostrar la tarjeta de perfil y el botón de edición
       profileCard.style.display = "block";
       document.getElementById("profile-tab").style.display = "block";
       document.getElementById("edit-profile-btn").style.display = "block";
-      
-      // Opcional: ocultamos el formulario de edición si está visible
       document.getElementById("edit-profile").style.display = "none";
     }
   }
@@ -274,11 +259,11 @@ function habilitarSwipe() {
     tarjeta.appendChild(iconReject);
 
     const mc = new Hammer(tarjeta);
-    // Configurar pan en todas direcciones
     mc.get("pan").set({ direction: Hammer.DIRECTION_ALL });
 
     mc.on("pan", (event) => {
-      tarjeta.style.transform = `translate(${event.deltaX}px, ${event.deltaY}px)`;
+      // Mover la tarjeta siguiendo el dedo sin animación (para un movimiento fluido)
+      tarjeta.style.transform = `translate(${event.deltaX}px, ${event.deltaY}px) rotate(${event.deltaX/10}deg)`;
       tarjeta.style.transition = "none";
 
       if (event.deltaX > 0) {
@@ -303,7 +288,8 @@ function habilitarSwipe() {
       const compaId = tarjeta.getAttribute("data-id");
 
       if (event.deltaX < -100) {
-        tarjeta.style.transform = "translateX(-100vw)";
+        // Animación de rechazo: se desliza a la izquierda con rotación
+        tarjeta.style.transform = "translateX(-100vw) rotate(-30deg)";
         tarjeta.style.opacity = "0";
 
         await setDoc(doc(db, "interacciones", user.uid), {
@@ -312,20 +298,24 @@ function habilitarSwipe() {
 
         setTimeout(() => tarjeta.remove(), 300);
       } else if (event.deltaX > 100) {
-        tarjeta.style.transform = "translateX(100vw)";
+        // Animación de like: se desliza a la derecha con rotación
+        tarjeta.style.transform = "translateX(100vw) rotate(30deg)";
         tarjeta.style.opacity = "0";
 
         try {
+          // Registrar el like del usuario actual
           await setDoc(doc(db, "interacciones", user.uid), {
             likes: arrayUnion(compaId)
           }, { merge: true });
 
+          // Verificar si el otro usuario ya le dio like al usuario actual
           const candidateInteractionsSnap = await getDoc(doc(db, "interacciones", compaId));
           if (
             candidateInteractionsSnap.exists() &&
             candidateInteractionsSnap.data().likes &&
             candidateInteractionsSnap.data().likes.includes(user.uid)
           ) {
+            // Registrar match mutuo
             await setDoc(doc(db, "matches", user.uid), {
               matches: arrayUnion(compaId)
             }, { merge: true });
@@ -342,6 +332,7 @@ function habilitarSwipe() {
           console.error("Error al registrar like/match:", error);
         }
       } else {
+        // Si no se supera el umbral, regresa la tarjeta a su posición original
         tarjeta.style.transform = "translate(0, 0)";
       }
     });
@@ -353,12 +344,14 @@ async function cargarCompas() {
   const user = auth.currentUser;
   if (!user) return;
 
-  // Obtener perfiles ya vistos (tanto matches como rechazos)
   const interaccionesRef = doc(db, "interacciones", user.uid);
   const interaccionesSnap = await getDoc(interaccionesRef);
-  const perfilesVistos = interaccionesSnap.exists() ? 
-    [...(interaccionesSnap.data().matches || []), ...(interaccionesSnap.data().rechazos || [])] : 
-    [];
+  const perfilesVistos = interaccionesSnap.exists()
+    ? [
+        ...(interaccionesSnap.data().matches || []),
+        ...(interaccionesSnap.data().rechazos || []),
+      ]
+    : [];
 
   const usuariosRef = collection(db, "usuarios");
   const querySnapshot = await getDocs(usuariosRef);
@@ -369,19 +362,9 @@ async function cargarCompas() {
 
   querySnapshot.forEach(docSnap => {
     const data = docSnap.data();
-    
-    // Verificación más explícita del ID del usuario actual
     const esPerfilPropio = docSnap.id === user.uid;
     const estaVisto = perfilesVistos.includes(docSnap.id);
     const perfilCompleto = isProfileComplete(data);
-
-    // Console.log para debugging
-    console.log('Perfil:', {
-      id: docSnap.id,
-      esPropio: esPerfilPropio,
-      estaVisto: estaVisto,
-      completo: perfilCompleto
-    });
 
     if (!esPerfilPropio && !estaVisto && perfilCompleto) {
       perfilesDisponibles = true;
@@ -401,14 +384,68 @@ async function cargarCompas() {
         </div>
       `;
 
+      // Crear contenedor para botones
+      const btnContainer = document.createElement("div");
+      btnContainer.classList.add("btn-container");
+
+      // Botón para rechazar (carita triste)
+      const btnReject = document.createElement("button");
+      btnReject.innerHTML = "😢";
+      btnReject.classList.add("btn-reject");
+      btnReject.addEventListener("click", async () => {
+        try {
+          await setDoc(doc(db, "interacciones", user.uid), {
+            rechazos: arrayUnion(docSnap.id)
+          }, { merge: true });
+        } catch (err) {
+          console.error("Error registrando rechazo:", err);
+        }
+        tarjeta.remove();
+      });
+
+      // Botón para dar like (carita feliz)
+      const btnLike = document.createElement("button");
+      btnLike.innerHTML = "😊";
+      btnLike.classList.add("btn-like");
+      btnLike.addEventListener("click", async () => {
+        try {
+          // Registrar like
+          await setDoc(doc(db, "interacciones", user.uid), {
+            likes: arrayUnion(docSnap.id)
+          }, { merge: true });
+
+          // Verificar si el otro usuario ya dio like
+          const candidateInteractionsSnap = await getDoc(doc(db, "interacciones", docSnap.id));
+          if (
+            candidateInteractionsSnap.exists() &&
+            candidateInteractionsSnap.data().likes &&
+            candidateInteractionsSnap.data().likes.includes(user.uid)
+          ) {
+            // Registrar match mutuo
+            await setDoc(doc(db, "matches", user.uid), {
+              matches: arrayUnion(docSnap.id)
+            }, { merge: true });
+            await setDoc(doc(db, "matches", docSnap.id), {
+              matches: arrayUnion(user.uid)
+            }, { merge: true });
+          }
+        } catch (err) {
+          console.error("Error registrando like/match:", err);
+        }
+        tarjeta.remove();
+      });
+
+      // Agregar botones al contenedor y éste a la tarjeta
+      btnContainer.appendChild(btnReject);
+      btnContainer.appendChild(btnLike);
+      tarjeta.appendChild(btnContainer);
+
       compasContainer.appendChild(tarjeta);
     }
   });
 
   if (!perfilesDisponibles) {
     compasContainer.innerHTML = "<p>No hay más perfiles disponibles por el momento.</p>";
-  } else {
-    habilitarSwipe();
   }
 }
 
@@ -456,23 +493,19 @@ async function cargarMatches() {
 // --- Código mínimo para el cambio de pestañas ---
 document.querySelectorAll(".tabs li").forEach(tab => {
   tab.addEventListener("click", () => {
-    // Ocultar todos los contenidos de las pestañas
     document.querySelectorAll("#tabs-content .tab").forEach(content => {
       content.style.display = "none";
     });
-    // Quitar la clase "active" a todas las pestañas
     document.querySelectorAll(".tabs li").forEach(t => t.classList.remove("active"));
-    // Mostrar la pestaña seleccionada y agregar clase "active"
     const tabName = tab.getAttribute("data-tab");
     document.getElementById(tabName).style.display = "block";
     tab.classList.add("active");
 
-    // Cargar contenido si es necesario
     if (tabName === "compas") {
       cargarCompas();
     } else if (tabName === "matches") {
       cargarMatches();
-    }else if (tabName === "profile") {
+    } else if (tabName === "profile") {
       cargarPerfilUsuario();
     }
   });
