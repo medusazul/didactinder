@@ -306,22 +306,33 @@ function habilitarSwipe() {
         const compaId = tarjeta.getAttribute("data-id");
 
         try {
-          // Registrar match potencial
-          await setDoc(doc(db, "matches", user.uid), {
-            matches: arrayUnion(compaId)
+          // Registrar like en interacciones
+          await setDoc(doc(db, "interacciones", user.uid), {
+            likes: arrayUnion(compaId)
           }, { merge: true });
 
-          // Registrar interacción
-          await setDoc(doc(db, "interacciones", user.uid), {
-            matches: arrayUnion(compaId)
-          }, { merge: true });
+          // Verificar si el otro usuario ya dio like
+          const candidateInteractionsSnap = await getDoc(doc(db, "interacciones", compaId));
+          if (
+            candidateInteractionsSnap.exists() &&
+            candidateInteractionsSnap.data().likes &&
+            candidateInteractionsSnap.data().likes.includes(user.uid)
+          ) {
+            // Registrar match mutuo en ambas cuentas
+            await setDoc(doc(db, "matches", user.uid), {
+              matches: arrayUnion(compaId)
+            }, { merge: true });
+            await setDoc(doc(db, "matches", compaId), {
+              matches: arrayUnion(user.uid)
+            }, { merge: true });
+          }
 
           setTimeout(() => {
             tarjeta.remove();
             cargarMatches();
           }, 300);
         } catch (error) {
-          console.error("Error al registrar match:", error);
+          console.error("Error al registrar like/match:", error);
         }
       } else {
         tarjeta.style.transform = "translate(0, 0)";

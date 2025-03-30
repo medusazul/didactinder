@@ -313,3 +313,21 @@ nav ul.tabs li.active {
   object-fit: cover;
   border-radius: 5px;
 }
+
+/* Centrado de cuadros de texto */
+input[type="text"],
+textarea {
+  display: block;
+  margin: 0 auto;
+  text-align: center;
+}
+
+/* Contenedor para la pantalla de inicio (usa la clase que corresponda en tu HTML) */
+.home-container,
+.inicio {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh; /* Ocupa al menos la altura completa de la ventana */
+}
