@@ -331,3 +331,24 @@ textarea {
   align-items: center;
   min-height: 100vh; /* Ocupa al menos la altura completa de la ventana */
 }
+
+/* Estilos para los iconos de swipe */
+.swipe-icon {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 2rem;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+.swipe-like {
+  right: 10px;
+  color: green;
+}
+
+.swipe-reject {
+  left: 10px;
+  color: red;
+}

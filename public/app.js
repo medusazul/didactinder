@@ -10,7 +10,7 @@ const firebaseConfig = {
   apiKey: "AIzaSyBV9LFUeZ4fHKv9FWwA_kLBiPaPeCGHR-8",
   authDomain: "didactinder-d642f.firebaseapp.com",
   projectId: "didactinder-d642f",
-  storageBucket: "didactinder-d642f.appspot.com",
+  storageBucket: "didactinder-d642f",
   messagingSenderId: "851846177120",
   appId: "1:851846177120:web:0275907fd82d4e0c1b7e05"
 };
@@ -223,16 +223,18 @@ async function cargarPerfilUsuario() {
   if (userSnap.exists()) {
     const data = userSnap.data();
     
-    // Asegurarnos de que los elementos existen antes de modificarlos
+    // Obtenemos los elementos de la tarjeta
     const profileName = document.getElementById("profile-name");
     const profileBio = document.getElementById("profile-bio");
     const photosContainer = document.getElementById("profile-photos");
-    
-    if (profileName && profileBio && photosContainer) {
+    const profileCard = document.getElementById("profile-card");
+
+    if (profileName && profileBio && photosContainer && profileCard) {
       profileName.textContent = data.nombre || "";
       profileBio.textContent = data.bio || "";
       photosContainer.innerHTML = "";
 
+      // Agregar cada foto, de la misma forma que la ven los compañeros
       if (data.photos && Array.isArray(data.photos)) {
         data.photos.forEach(url => {
           const imgContainer = document.createElement("div");
@@ -242,32 +244,18 @@ async function cargarPerfilUsuario() {
           img.src = url;
           img.classList.add("photo-preview");
 
-          const deleteBtn = document.createElement("button");
-          deleteBtn.innerHTML = "&times;";
-          deleteBtn.classList.add("delete-photo", "hidden");
-          deleteBtn.addEventListener("click", async () => {
-            imgContainer.remove();
-            await updateDoc(doc(db, "usuarios", user.uid), {
-              photos: arrayRemove(url)
-            });
-          });
-
           imgContainer.appendChild(img);
-          imgContainer.appendChild(deleteBtn);
           photosContainer.appendChild(imgContainer);
         });
       }
-
-      // Asegurarnos de que se muestren los elementos correctos
-      document.getElementById("edit-profile").style.display = "none";
+      
+      // Mostrar la tarjeta de perfil y el botón de edición
+      profileCard.style.display = "block";
       document.getElementById("profile-tab").style.display = "block";
       document.getElementById("edit-profile-btn").style.display = "block";
       
-      // Forzar la visibilidad de la tarjeta de perfil
-      const profileCard = document.getElementById("profile-card");
-      if (profileCard) {
-        profileCard.style.display = "block";
-      }
+      // Opcional: ocultamos el formulario de edición si está visible
+      document.getElementById("edit-profile").style.display = "none";
     }
   }
 }
@@ -275,22 +263,45 @@ async function cargarPerfilUsuario() {
 // Función para habilitar el swipe en las tarjetas de "Tus compas"
 function habilitarSwipe() {
   document.querySelectorAll(".tarjeta-compa").forEach(tarjeta => {
+    // Agregar iconos para like y rechazo
+    const iconLike = document.createElement("div");
+    const iconReject = document.createElement("div");
+    iconLike.innerHTML = "&#10004;"; // tilde verde
+    iconReject.innerHTML = "&#10060;"; // cruz roja
+    iconLike.classList.add("swipe-icon", "swipe-like");
+    iconReject.classList.add("swipe-icon", "swipe-reject");
+    tarjeta.appendChild(iconLike);
+    tarjeta.appendChild(iconReject);
+
     const mc = new Hammer(tarjeta);
 
     mc.on("pan", (event) => {
       tarjeta.style.transform = `translate(${event.deltaX}px, ${event.deltaY}px)`;
       tarjeta.style.transition = "none";
+
+      if (event.deltaX > 0) {
+        iconLike.style.opacity = Math.min(event.deltaX / 100, 1);
+        iconReject.style.opacity = 0;
+      } else if (event.deltaX < 0) {
+        iconReject.style.opacity = Math.min(Math.abs(event.deltaX) / 100, 1);
+        iconLike.style.opacity = 0;
+      } else {
+        iconLike.style.opacity = 0;
+        iconReject.style.opacity = 0;
+      }
     });
 
     mc.on("panend", async (event) => {
       tarjeta.style.transition = "transform 0.3s ease";
+      iconLike.style.opacity = 0;
+      iconReject.style.opacity = 0;
+
+      const user = auth.currentUser;
+      const compaId = tarjeta.getAttribute("data-id");
 
       if (event.deltaX < -100) {
         tarjeta.style.transform = "translateX(-100vw)";
         tarjeta.style.opacity = "0";
-
-        const user = auth.currentUser;
-        const compaId = tarjeta.getAttribute("data-id");
 
         // Registrar rechazo
         await setDoc(doc(db, "interacciones", user.uid), {
@@ -301,9 +312,6 @@ function habilitarSwipe() {
       } else if (event.deltaX > 100) {
         tarjeta.style.transform = "translateX(100vw)";
         tarjeta.style.opacity = "0";
-
-        const user = auth.currentUser;
-        const compaId = tarjeta.getAttribute("data-id");
 
         try {
           // Registrar like en interacciones
